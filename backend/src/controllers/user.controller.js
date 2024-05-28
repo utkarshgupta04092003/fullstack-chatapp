@@ -22,6 +22,7 @@ const generateAccesstokenAndRefreshToken = async (userId) => {
         const refreshToken = await user.generateRefreshtoken();
 
         user.refreshToken = refreshToken;
+        user.accessToken = accessToken;
         await user.save({ validateBeforeSave: false });
 
         return { accessToken, refreshToken };
@@ -348,5 +349,3 @@ export {
     updateUserCoverImage,
     getCurrentUser,
 };
-
-// remaining route for update avatar and cover Image
