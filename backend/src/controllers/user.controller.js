@@ -3,7 +3,10 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { ValidateEmail } from "../utils/ValidateEmail.js";
 import { User } from "../models/user.model.js";
-import { uploadOnCloudinary } from "../utils/cloudinary.js";
+import {
+    deleteFromCloudinary,
+    uploadOnCloudinary,
+} from "../utils/cloudinary.js";
 import {
     coverImageCloudinaryFoldername,
     profileImageCloudinaryFoldername,
@@ -252,15 +255,25 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
 
 const updateUserAvatar = asyncHandler(async (req, res) => {
     const avatarImageLocalPath = req.file?.path;
+    // find the avatar image local path
     if (!avatarImageLocalPath) {
         throw new ApiError(400, "Avatar file is missing");
     }
-    const avatarResponse = await uploadOnCloudinary(avatarImageLocalPath);
+    // upload to cloudinary
+    const avatarResponse = await uploadOnCloudinary(
+        avatarImageLocalPath,
+        profileImageCloudinaryFoldername
+    );
     if (!avatarResponse) {
         throw new ApiError(500, "Something went wrong in cloudinary");
     }
-    console.log("avatar response", avatarResponse);
     const userId = req.user?._id;
+    // store the previous cloudinary avatar url for delete later
+    const cloudinaryProfileUrl = await User.findById(userId).select("avatar");
+    if (!cloudinaryProfileUrl) {
+        throw new ApiError(500, "Cannot get user's previous avatar Url");
+    }
+    // update the avatar url
     const user = await User.findByIdAndUpdate(
         userId,
         {
@@ -270,9 +283,11 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
         },
         { new: true }
     ).select("-password");
-    if(!user){
+    if (!user) {
         throw new ApiError(500, "Something went wrong while updating avatar");
     }
+    // delete the already uploaded profile image from cloudinary
+    deleteFromCloudinary(cloudinaryProfileUrl.avatar);
     return res.status(200).json(new ApiResponse(200, "Avatar Updated", user));
 });
 
@@ -281,12 +296,18 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
     if (!coverImageLocalPath) {
         throw new ApiError(400, "Cover image file is missing");
     }
-    const coverImageResponse = await uploadOnCloudinary(coverImageLocalPath);
+    // upload the cover image to cloudinary
+    const coverImageResponse = await uploadOnCloudinary(
+        coverImageLocalPath,
+        coverImageCloudinaryFoldername
+    );
     if (!coverImageResponse) {
         throw new ApiError(500, "Something went wrong in cloudinary");
     }
-    console.log("cover image response", coverImageResponse);
     const userId = req.user?._id;
+    // get the previously stored cover image url
+    const cloudinaryCoverUrl = await User.findById(userId).select("coverImage");
+    console.log("cloudinary cover image: ", cloudinaryCoverUrl);
     const user = await User.findByIdAndUpdate(
         userId,
         {
@@ -296,11 +317,26 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
         },
         { new: true }
     ).select("-password");
-    if(!user){
-        throw new ApiError(500, "Something went wrong while updating cover image");
+    if (!user) {
+        throw new ApiError(
+            500,
+            "Something went wrong while updating cover image"
+        );
     }
-    return res.status(200).json(new ApiResponse(200, "Cover Image Updated", user));
+    // delete the already uploaded cover image from cloudinary if it is available
+    if (cloudinaryCoverUrl.coverImage)
+        deleteFromCloudinary(cloudinaryCoverUrl.coverImage);
+    return res
+        .status(200)
+        .json(new ApiResponse(200, "Cover Image Updated", user));
 });
+
+const getCurrentUser = asyncHandler(async (req, res) => {
+    return res
+        .status(200)
+        .json(new ApiResponse(200, "User fetched Successfully", req.user));
+});
+
 export {
     registerUser,
     loginUser,
@@ -309,8 +345,8 @@ export {
     changeCurrentPassword,
     updateAccountDetails,
     updateUserAvatar,
-    updateUserCoverImage
+    updateUserCoverImage,
+    getCurrentUser,
 };
-
 
 // remaining route for update avatar and cover Image

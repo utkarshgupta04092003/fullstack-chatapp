@@ -1,8 +1,4 @@
-# Chai aur code Backend Playlist(working)
-
-- Model Link: [click here](https://app.eraser.io/workspace/YtPqZ1VogxGy1jzIDkzj)
-
-
+# Fullstack-Chatapp Backend (working)
 
 create .env file and give these values
 - PORT = 3000
@@ -20,5 +16,13 @@ create .env file and give these values
 
 
 ## Routes
-- test server: /api/v1/test
-- user register: /api/v1/users/register
+- GET test server: '/api/v1/test'
+- POST user register: '/api/v1/users/register'
+- POST user login: '/api/v1/users/login'
+- POST user logout: '/api/v1/users/logout'
+- POST refreshAccessToken: '/api/v1/users/refreshaccesstoken'
+- POST changepassword: '/api/v1/users/changepassword'
+- PATCH updateAccountDetails: '/api/v1/users/updateaccountdetails'
+- GET getCurrentUser: '/api/v1/users/getcurrentuser'
+- PATCH updateAvatarImage: '/api/v1/users/updateprofileimage'
+- PATCH udpateCoverImage: '/api/v1/users/updatecoverimage'
