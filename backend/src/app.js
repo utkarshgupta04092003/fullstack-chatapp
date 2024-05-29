@@ -19,10 +19,12 @@ app.use(express.static('public'));
 
 // import userRouter
 import userRouter from './routes/user.routes.js';
+import messageRouter from './routes/message.routes.js';
 // user test route
 app.get('/api/v1/test',(req, res)=>res.status(200).json({serverStatus: "Good"}));
 // use userrouter for redirecting to router page
 app.use('/api/v1/users', userRouter);
+app.use('/api/v1/messages', messageRouter);
 // http://localhost:3000/api/v1/users
 
 export { app };
