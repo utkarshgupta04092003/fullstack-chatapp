@@ -3,10 +3,15 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import Register from "./pages/Register";
 import Login from "./pages/Login";
 import Home from "./pages/Home";
+import { Provider } from 'react-redux';
+import store from './redux/store';
+
+
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   useEffect(() => {
-    if (document.cookie.includes('accessToken')) {
+    if (localStorage.getItem('user') && document.cookie.includes('accessToken')) {
+      console.log('checked auth', true);
       setIsAuthenticated(true);
     }
   }, []);
@@ -16,15 +21,17 @@ export default function App() {
   };
   return (
     <div>
-      <BrowserRouter>
+      <Provider store={store}>
+        <BrowserRouter>
 
-        <Routes>
-          <Route path="/register" element={<Register isAuthenticated={isAuthenticated}/>} />
-          <Route path="/login" element={<Login authenticate={authenticate} isAuthenticated={isAuthenticated}/>} />
-          <Route path='/' element={isAuthenticated ? <Home /> : <Navigate to={'/login'}/> } />
-        </Routes>
+          <Routes>
+            <Route path="/register" element={<Register isAuthenticated={isAuthenticated} />} />
+            <Route path="/login" element={<Login authenticate={authenticate} isAuthenticated={isAuthenticated} />} />
+            <Route path='/' element={isAuthenticated ? <Home /> : <Navigate to={'/login'} />} />
+          </Routes>
 
-      </BrowserRouter>
+        </BrowserRouter>
+      </Provider>
     </div>
   )
 }

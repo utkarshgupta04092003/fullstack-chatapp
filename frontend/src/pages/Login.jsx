@@ -3,11 +3,15 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { userLoginRoute } from '../Routes';
 import toast, { Toaster } from 'react-hot-toast';
+import { useDispatch } from 'react-redux';
+import { loginUser } from '../redux/userSlice';
 
 const Login = ({ authenticate, isAuthenticated }) => {
 
   const navigate = useNavigate();
-  if(isAuthenticated){
+  const dispatch = useDispatch();
+  if (isAuthenticated === true && document.cookie.includes('accessToken')){
+    console.log('isauth in login', isAuthenticated)
     navigate('/');
   }
   const [email, setEmail] = useState('');
@@ -37,8 +41,6 @@ const Login = ({ authenticate, isAuthenticated }) => {
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
     } else {
-      // Handle successful login (e.g., call API)
-      console.log("callin api");
       try {
         const response = await axios.post(userLoginRoute, { email, password });
         console.log('res data', response.data);
@@ -46,6 +48,9 @@ const Login = ({ authenticate, isAuthenticated }) => {
         document.cookie = `refreshToken=${response.data.data.refreshToken}`;
         toast.success(response.data.message);
         authenticate(true);
+        // set the user to user redux
+        dispatch(loginUser(response.data.data));
+        localStorage.setItem('user', JSON.stringify(response.data.data));
       } catch (error) {
         console.error(error);
         toast.error(error.response?.data?.message || error.message);
@@ -112,7 +117,7 @@ const Login = ({ authenticate, isAuthenticated }) => {
           </div>
         </Link>
       </div>
-      <Toaster/>
+      <Toaster />
     </div>
   );
 };

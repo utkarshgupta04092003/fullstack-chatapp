@@ -82,6 +82,9 @@ const Register = ({isAuthenticated}) => {
           avatar: null
         });
         setErrors({});
+        setTimeout(() => {
+          navigate('/login');
+        }, 2000);
       } catch (error) {
         console.error('Registration error:', error.response?.data || error.message);
         toast.error('Registration failed', error.response?.data);
