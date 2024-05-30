@@ -2,6 +2,7 @@ import axios from 'axios';
 import React, { useEffect, useState } from 'react'
 import { getUserListRoute } from '../Routes';
 import getAccessTokenFromCookie from '../utils/getAccessToken';
+import { Link } from 'react-router-dom';
 
 export default function Sidebar({ udpatedSelectedUser }) {
     const [userList, setUserList] = useState([]);
@@ -53,7 +54,7 @@ export default function Sidebar({ udpatedSelectedUser }) {
                 {!isLoading && userList &&  userList.length == 0 && <h1 className="text-lg font-semibold text-center">No chats found</h1>}
                 {
                     userList?.map((user) => (
-                        <div className="flex items-center justify-between space-x-4 mb-2 border border-gray-500 cursor-pointer p-2 hover:bg-gray-900 rounded-lg " key={user._id} onClick={() => udpatedSelectedUser(user)}>
+                        <Link to={`/c/${user._id}`} className="flex items-center justify-between space-x-4 mb-2 border border-gray-500 cursor-pointer p-2 hover:bg-gray-900 rounded-lg " key={user._id} >
                             <div className='flex space-x-4'>
                                 <div className="w-10 h-10 rounded-full bg-gray-700">
                                     <img src={user.userDetails.avatar} alt={user.userDetails.fullname} className='rounded-full' /></div>
@@ -69,7 +70,7 @@ export default function Sidebar({ udpatedSelectedUser }) {
                                     calculateDifference(user.lastMessageDate).days > 0 ? `${calculateDifference(user.lastMessageDate).days}  days ago` : calculateDifference(user.lastMessageDate).hours > 0 ? `${calculateDifference(user.lastMessageDate).hours} hours ago` : `${calculateDifference(user.lastMessageDate).minutes} minutes ago`
                                 }
                             </div>
-                        </div>
+                        </Link>
                     ))
                 }
 

@@ -211,48 +211,6 @@ const getMessage = asyncHandler(async (req, res) => {
             },
         },
         {
-            $lookup: {
-                from: "users",
-                localField: "sender", // Optimized for both sender and receiver
-                foreignField: "_id",
-                as: "sender", // Temporary lookup result
-            },
-        },
-        {
-            $unwind: "$sender",
-        },
-        {
-            $project: {
-                "sender.coverImage": 0,
-                "sender.password": 0,
-                "sender.createdAt": 0,
-                "sender.accessToken": 0,
-                "sender.refreshToken": 0,
-                "sender.updatedAt": 0,
-            },
-        },
-        {
-            $lookup: {
-                from: "users",
-                localField: "receiver", // Optimized for both sender and receiver
-                foreignField: "_id",
-                as: "receiver", // Temporary lookup result
-            },
-        },
-        {
-            $unwind: "$receiver",
-        },
-        {
-            $project: {
-                "receiver.coverImage": 0,
-                "receiver.password": 0,
-                "receiver.createdAt": 0,
-                "receiver.accessToken": 0,
-                "receiver.refreshToken": 0,
-                "receiver.updatedAt": 0,
-            },
-        },
-        {
             $sort: {
                 sendAt: -1, // Sort by sendAt in descending order to get the latest messages first
             },
@@ -270,9 +228,17 @@ const getMessage = asyncHandler(async (req, res) => {
         },
     ]);
     // console.log("getmsg", messages);
+    const senderDetails = {_id: req.user._id, fullname: req.user.fullname, avatar: req.user.avatar};
+    const receiverDetails = await User.findById(receiver).select("fullname avatar");
+    if(!receiverDetails) {
+        return res
+            .status(404)
+            .json(new ApiResponse(404, "Receiver not found", null));
+    }
+    console.log({messages, senderDetails, receiverDetails})
     return res
         .status(200)
-        .json(new ApiResponse(200, "Message Fetched Successfully", messages));
+        .json(new ApiResponse(200, "Message Fetched Successfully", {messages, senderDetails, receiverDetails}));
 });
 
 // get the user list with whom the current user has chat either in sent or received

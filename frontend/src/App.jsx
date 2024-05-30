@@ -28,6 +28,7 @@ export default function App() {
             <Route path="/register" element={<Register isAuthenticated={isAuthenticated} />} />
             <Route path="/login" element={<Login authenticate={authenticate} isAuthenticated={isAuthenticated} />} />
             <Route path='/' element={isAuthenticated ? <Home /> : <Navigate to={'/login'} />} />
+            <Route path='/c/:receiverId' element={isAuthenticated ? <Home /> : <Navigate to={'/login'} />} />
           </Routes>
 
         </BrowserRouter>

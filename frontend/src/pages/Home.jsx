@@ -25,7 +25,7 @@ function Home() {
       {/* Sidebar */}
       <Sidebar  udpatedSelectedUser={udpatedSelectedUser}/>
       {/* Chat area */}
-      <ChatMessage selectedUser={selectedUser} />
+      <ChatMessage  />
     </div>
   );
 }
