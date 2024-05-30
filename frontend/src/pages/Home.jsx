@@ -1,7 +1,7 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import Sidebar from '../components/Sidebar';
 import ChatMessage from '../components/ChatMessage';
-import Profile from '../components/LeftSidebar';
+import LeftSideBar from '../components/LeftSidebar';
 import { useDispatch } from 'react-redux';
 import { loginUser } from '../redux/userSlice';
 
@@ -13,14 +13,19 @@ function Home() {
       dispatch(loginUser(user));
     }
   }, []);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const udpatedSelectedUser = (user) => {
+    console.log('object', user)
+    setSelectedUser(user);
+  }
   return (
     <div className="flex h-screen bg-gray-200">
       {/* profile section */}
-      <Profile />
+      <LeftSideBar />
       {/* Sidebar */}
-      <Sidebar />
+      <Sidebar  udpatedSelectedUser={udpatedSelectedUser}/>
       {/* Chat area */}
-      <ChatMessage />
+      <ChatMessage selectedUser={selectedUser} />
     </div>
   );
 }

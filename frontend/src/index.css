@@ -1,3 +1,17 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.text-container {
+    display: inline-block; /* Ensures smooth transitions within block context */
+  }
+  
+  .text-animate {
+    color: black;
+    animation: animateText 2s infinite alternate ease-in-out;
+  }
+  
+  @keyframes animateText {
+    from { color: black; }
+    to { color: gray; }
+  }

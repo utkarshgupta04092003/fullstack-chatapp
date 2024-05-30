@@ -198,8 +198,58 @@ const getMessage = asyncHandler(async (req, res) => {
     const messages = await Message.aggregate([
         {
             $match: {
-                sender: sender,
-                receiver: new mongoose.Types.ObjectId(receiver),
+                $or: [
+                    {
+                        sender: sender,
+                        receiver: new mongoose.Types.ObjectId(receiver),
+                    },
+                    {
+                        sender: new mongoose.Types.ObjectId(receiver),
+                        receiver: sender,
+                    },
+                ],
+            },
+        },
+        {
+            $lookup: {
+                from: "users",
+                localField: "sender", // Optimized for both sender and receiver
+                foreignField: "_id",
+                as: "sender", // Temporary lookup result
+            },
+        },
+        {
+            $unwind: "$sender",
+        },
+        {
+            $project: {
+                "sender.coverImage": 0,
+                "sender.password": 0,
+                "sender.createdAt": 0,
+                "sender.accessToken": 0,
+                "sender.refreshToken": 0,
+                "sender.updatedAt": 0,
+            },
+        },
+        {
+            $lookup: {
+                from: "users",
+                localField: "receiver", // Optimized for both sender and receiver
+                foreignField: "_id",
+                as: "receiver", // Temporary lookup result
+            },
+        },
+        {
+            $unwind: "$receiver",
+        },
+        {
+            $project: {
+                "receiver.coverImage": 0,
+                "receiver.password": 0,
+                "receiver.createdAt": 0,
+                "receiver.accessToken": 0,
+                "receiver.refreshToken": 0,
+                "receiver.updatedAt": 0,
             },
         },
         {
@@ -219,6 +269,7 @@ const getMessage = asyncHandler(async (req, res) => {
             },
         },
     ]);
+    // console.log("getmsg", messages);
     return res
         .status(200)
         .json(new ApiResponse(200, "Message Fetched Successfully", messages));
@@ -231,58 +282,57 @@ const getUserList = asyncHandler(async (req, res) => {
     const userId = req.user._id;
     const chatUsers = await Message.aggregate([
         {
-          $match: {
-            $or: [
-              { sender: userId },
-              { receiver: userId }
-            ]
-          }
-        },
-        {
-          $sort: { sendAt: -1 }
-        },
-        {
-          $group: {
-            _id: {
-              $cond: [
-                { $eq: ["$sender", userId] },
-                "$receiver",
-                "$sender"
-              ]
+            $match: {
+                $or: [{ sender: userId }, { receiver: userId }],
             },
-            lastMessageDate: { $first: "$sendAt" },
-            lastMessage: { $first: "$message" }
-          }
         },
         {
-          $lookup: {
-            from: 'users',
-            localField: '_id',
-            foreignField: '_id',
-            as: 'userDetails'
-          }
+            $sort: { sendAt: -1 },
         },
         {
-          $unwind: '$userDetails'
+            $group: {
+                _id: {
+                    $cond: [
+                        { $eq: ["$sender", userId] },
+                        "$receiver",
+                        "$sender",
+                    ],
+                },
+                lastMessageDate: { $first: "$sendAt" },
+                lastMessage: { $first: "$message" },
+            },
         },
         {
-          $project: {
-            _id: 1,
-            'userDetails.fullname': 1,
-            'userDetails.email': 1,
-            'userDetails.username': 1,
-            'userDetails.avatar': 1,
-            lastMessage: 1,
-            lastMessageDate: 1
-          }
+            $lookup: {
+                from: "users",
+                localField: "_id",
+                foreignField: "_id",
+                as: "userDetails",
+            },
         },
         {
-          $sort: { lastMessageDate: -1 }
-        }
-      ]);
-     return res
+            $unwind: "$userDetails",
+        },
+        {
+            $project: {
+                _id: 1,
+                "userDetails.fullname": 1,
+                "userDetails.email": 1,
+                "userDetails.username": 1,
+                "userDetails.avatar": 1,
+                lastMessage: 1,
+                lastMessageDate: 1,
+            },
+        },
+        {
+            $sort: { lastMessageDate: -1 },
+        },
+    ]);
+    return res
         .status(200)
-        .json(new ApiResponse(200, "User List Fetched Successfully", chatUsers));
+        .json(
+            new ApiResponse(200, "User List Fetched Successfully", chatUsers)
+        );
 });
 
 export {

@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom';
 
 export default function Profile() {
     const user = useSelector(state => state.user.user);
-    const [isOpen, setIsOpen] = useState(true);
+    const [isOpen, setIsOpen] = useState(false);
     const navigate = useNavigate();
     const logoutUser = async () => {
         console.log("logout called")

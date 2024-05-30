@@ -5,3 +5,4 @@ export const userLoginRoute = `${host}/api/v1/users/login`;
 export const userLogoutRoute = `${host}/api/v1/users/logout`;
 
 export const getUserListRoute = `${host}/api/v1/messages/getuserlist`;
+export const getMessageRoute = `${host}/api/v1/messages/getmessage`;
