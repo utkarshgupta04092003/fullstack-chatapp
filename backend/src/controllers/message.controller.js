@@ -235,7 +235,6 @@ const getMessage = asyncHandler(async (req, res) => {
             .status(404)
             .json(new ApiResponse(404, "Receiver not found", null));
     }
-    console.log({messages, senderDetails, receiverDetails})
     return res
         .status(200)
         .json(new ApiResponse(200, "Message Fetched Successfully", {messages, senderDetails, receiverDetails}));
