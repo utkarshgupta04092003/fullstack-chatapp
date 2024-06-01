@@ -8,4 +8,6 @@
 
 - Downloading the cloudinary uploaded pdf
 
+- Patch request is not working for editing the message
+
  

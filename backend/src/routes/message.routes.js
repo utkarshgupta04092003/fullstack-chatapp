@@ -16,7 +16,7 @@ router
     .route("/adddocument")
     .post(verifyJWT, upload.single("photos"), addDocument);
 router.route("/deletemessage").delete(verifyJWT, deleteMessage);
-router.route("/editmessage").patch(verifyJWT, editMessage);
+router.route("/editmessage").post(verifyJWT, editMessage);
 
 router.route("/getmessage").post(verifyJWT, getMessage);
 router.route("/getuserlist").post(verifyJWT, getUserList);

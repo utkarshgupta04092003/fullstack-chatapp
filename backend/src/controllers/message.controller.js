@@ -131,6 +131,7 @@ const deleteMessage = asyncHandler(async (req, res) => {
 
 const editMessage = asyncHandler(async (req, res) => {
     const id = req.body.messageId;
+    console.log('id', id)
     if (!id) {
         return res
             .status(400)
@@ -138,13 +139,14 @@ const editMessage = asyncHandler(async (req, res) => {
     }
     // find the message details
     const response = await Message.findById(id);
+    console.log(response);
     if (!response) {
         return res
             .status(500)
             .json(
                 new ApiResponse(
                     500,
-                    "Something went wrong while deleting message",
+                    "Did not found the message",
                     null
                 )
             );
@@ -156,12 +158,12 @@ const editMessage = asyncHandler(async (req, res) => {
             .json(
                 new ApiResponse(
                     401,
-                    "Unauthorized User to Delete this message",
+                    "Unauthorized User to Edit this message",
                     null
                 )
             );
     }
-    // if this is not text message, delete this document from cloudinary
+    // if this is not text message, edit this document from cloudinary
     if (response.messageType != "text") {
         return res
             .status(400)
@@ -169,7 +171,7 @@ const editMessage = asyncHandler(async (req, res) => {
                 new ApiResponse(400, "You can not edit document message", null)
             );
     }
-    // delete the message from mongo
+    // edit the message from mongo
     const updatedMessage = await Message.findByIdAndUpdate(
         id,
         {
@@ -183,7 +185,7 @@ const editMessage = asyncHandler(async (req, res) => {
     return res
         .status(200)
         .json(
-            new ApiResponse(200, "Message Deleted Successfully", updatedMessage)
+            new ApiResponse(200, "Message Updated Successfully", updatedMessage)
         );
 });
 // need to check
