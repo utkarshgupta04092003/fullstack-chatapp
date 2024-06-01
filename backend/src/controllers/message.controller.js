@@ -10,7 +10,7 @@ import {
 import { User } from "../models/user.model.js";
 
 const addMessage = asyncHandler(async (req, res) => {
-    const { message, messageType, receiver } = req.body;
+    const { message, messageType, receiver, fileName } = req.body;
     // check the required fields
     if (!message || !messageType || !receiver) {
         return res
@@ -27,6 +27,7 @@ const addMessage = asyncHandler(async (req, res) => {
         messageType,
         sender,
         receiver,
+        fileName: fileName || ''
     });
     // check if the message was created successfully
     if (!newMessage) {
@@ -265,6 +266,8 @@ const getUserList = asyncHandler(async (req, res) => {
                 },
                 lastMessageDate: { $first: "$sendAt" },
                 lastMessage: { $first: "$message" },
+                messageType: { $first: "$messageType"},
+                fileName: { $first: "$fileName"}
             },
         },
         {
@@ -287,6 +290,8 @@ const getUserList = asyncHandler(async (req, res) => {
                 "userDetails.avatar": 1,
                 lastMessage: 1,
                 lastMessageDate: 1,
+                messageType: 1,
+                fileName: 1
             },
         },
         {

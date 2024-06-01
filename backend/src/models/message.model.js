@@ -8,7 +8,9 @@ const messageSchema = new mongoose.Schema(
         messageType: {
             type: String,
             required: true,
-            enum: ["text", "image", "video", "audio", "document"],
+        },
+        fileName: {
+            type: String,
         },
         sender: {
             type: mongoose.Schema.Types.ObjectId,

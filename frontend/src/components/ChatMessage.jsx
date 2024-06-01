@@ -2,9 +2,13 @@ import React, { useEffect, useState } from "react";
 import { getMessageRoute } from "../Routes";
 import axios from "axios";
 import { IoMdSend } from "react-icons/io";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { addMessage, setMessages, uploadFile } from "../redux/messageSlice";
+import FileUploadComponent from "./FileUploadComponent";
+import { FaPlus } from "react-icons/fa";
+import { MdOutlineFileDownload } from "react-icons/md";
+
 
 export default function ChatMessage() {
     const { receiverId } = useParams();
@@ -14,7 +18,8 @@ export default function ChatMessage() {
     const [senderDetails, setSenderDetails] = useState({});
     const [receiverDetails, setReceiverDetails] = useState({});
     const [isLoading, setIsLoading] = useState(false);
-    const [photos, setPhotos] = useState(null);
+    // const [photos, setPhotos] = useState(null);
+    const [isOpen, setIsOpen] = useState(false);
 
     const dispatch = useDispatch();
     const { messages } = useSelector((state) => state.messages);
@@ -96,6 +101,7 @@ export default function ChatMessage() {
                     <div className="flex-1 space-y-6 overflow-y-auto rounded-xl bg-slate-200 p-4 text-sm leading-6 text-slate-200 shadow-sm   sm:text-base sm:leading-7">
                         {messages?.map((message) =>
                             message?.sender == senderDetails._id ? (
+                                // sender (right side message)
                                 <div className="flex flex-row-reverse items-start" key={message._id}>
                                     <img
                                         className="ml-2 h-8 w-8 rounded-full"
@@ -109,12 +115,41 @@ export default function ChatMessage() {
                                             </p>
                                         }
                                         {
-                                            message.messageType == "image" &&
-                                            <img src={message.message} alt="image" className="h-48 w-48 rounded-lg" />
+                                            (['image', 'jpg', 'jpeg', 'png'].filter((f) => f === message.messageType)).length != 0 &&
+                                            <img src={message.message} alt={message.messageType} className="h-56 w-56 rounded-lg" />
+                                        }
+                                        {
+                                            message.messageType == "pdf" &&
+                                            <p className="flex items-center">{message.fileName}.pdf
+                                                <a href={message.message} download target="_blank">
+                                                    <MdOutlineFileDownload className="text-2xl" />
+                                                </a>
+                                            </p>
+
+                                        }
+                                        {// for all type of document like excel, word, text etc
+                                            message.messageType == "raw" &&
+                                            <p className="flex items-center">{message.fileName}
+                                                <a href={message.message} download target="_blank">
+                                                    <MdOutlineFileDownload className="text-2xl" />
+                                                </a>
+                                            </p>
+
+                                        }
+                                        {
+                                            (['video', 'mp4'].filter((f) => f === message.messageType)).length != 0 &&
+                                            <video controls width="400" height="">
+                                                <source src={message.message} type="video/mp4" />
+                                            </video>
+                                        }
+                                         {
+                                            (['text','jpg', 'jpeg', 'png', 'image', 'video','mp4', 'pdf', 'raw'].filter((f) => f === message.messageType)).length == 0 &&
+                                                <p>This message format is not valid</p>
                                         }
                                     </div>
                                 </div>
                             ) : (
+                                // receiver (left side)
                                 <div className="flex items-start" key={message._id}>
                                     <img
                                         className="mr-2 h-8 w-8 rounded-full"
@@ -128,8 +163,36 @@ export default function ChatMessage() {
                                             </p>
                                         }
                                         {
-                                            message.messageType == "image" &&
-                                            <img src={message.message} alt="image" className="h-48 w-48 rounded-lg" />
+                                            (['image', 'jpg', 'jpeg', 'png'].filter((f) => f === message.messageType)).length != 0 &&
+                                            <img src={message.message} alt={message.messageType} className="h-56 w-56 rounded-lg" />
+                                        }
+                                        {
+                                            message.messageType == "pdf" &&
+                                            <p className="flex items-center">{message.fileName}.pdf
+                                                <a href={message.message} download target="_blank">
+                                                    <MdOutlineFileDownload className="text-2xl" />
+                                                </a>
+                                            </p>
+
+                                        }
+                                        {// for all type of document like excel, word, text etc
+                                            message.messageType == "raw" &&
+                                            <p className="flex items-center">{message.fileName}
+                                                <a href={message.message} download target="_blank">
+                                                    <MdOutlineFileDownload className="text-2xl" />
+                                                </a>
+                                            </p>
+
+                                        }
+                                        {
+                                            (['video', 'mp4'].filter((f) => f === message.messageType)).length != 0 &&
+                                            <video controls width="400" height="">
+                                                <source src={message.message} type="video/mp4" />
+                                            </video>
+                                        }
+                                         {
+                                            (['text','jpg', 'jpeg', 'png', 'image', 'video','mp4', 'pdf', 'raw'].filter((f) => f === message.messageType)).length == 0 &&
+                                                <p>This message format is not valid</p>
                                         }
                                     </div>
                                 </div>
@@ -139,26 +202,39 @@ export default function ChatMessage() {
                 )}
             </div>
             {/* Message input */}
-            <div>
-                <div className="flex justify-between items-center bg-gray-700 p-3">
+            <div className="relative">
+
+                {/* manually upload document without widget */}
+                {/* <div className="flex justify-between items-center bg-gray-700 p-3">
                     <input type="file" name="photos" id="photos" onChange={(e)=>setPhotos(e.target.files[0])}/>
                     <button className="border border-red-500" onClick={()=>dispatch(uploadFile({photos, receiverId: receiverDetails._id}))}>Upload</button>
-                </div>
+                </div> */}
 
-                <form className="flex justify-between items-center mt-4 m-4" onSubmit={(e) => { e.preventDefault(); dispatch(addMessage({ input, receiverId: receiverDetails._id })) }}>
-                    <input
-                        type="text"
-                        placeholder="Type a message..."
-                        className="flex-1 p-2 rounded border border-gray-400 focus:outline-none"
-                        value={input}
-                        onChange={(e) => setInput(e.target.value)}
-                    />
+                {
+                    isOpen && <div className="absolute -top-10" onClick={() => setIsOpen(!isOpen)}>
+                        <FileUploadComponent receiverDetails={receiverDetails} />
+                    </div>
 
-                    <button className="px-4 py-2 bg-blue-500 text-white rounded">
-                        Send
-                    </button>
+                }
+                <form className="flex justify-between items-center mt-4 m-4" onSubmit={(e) => { e.preventDefault(); dispatch(addMessage({ input, receiverId: receiverDetails._id })); setInput("") }}>
+                    <div className="w-full flex">
+                        <div className="border border-gray-400 border-r-0 w-10  bg-white  p-3 font-extrabold">
+                            <FaPlus onClick={() => setIsOpen(!isOpen)} />
+                        </div>
+                        <input
+                            type="text"
+                            placeholder="Type a message..."
+                            className="flex-1 p-2 border border-l-0 border-gray-400 focus:outline-none w-full"
+                            value={input}
+                            onChange={(e) => setInput(e.target.value)}
+                        />
+
+                        <button className="px-4 py-2 bg-blue-500 text-white rounded">
+                            Send
+                        </button>
+                    </div>
                 </form>
             </div>
-        </div>
+        </div >
     );
 }

@@ -22,8 +22,9 @@ export const addMessage = createAsyncThunk(
         addMessageRoute,
         {
           message: payload.input,
-          messageType: "text",
+          messageType: payload.messageType || "text",
           receiver: payload.receiverId,
+          fileName: payload.fileName
         },
         { headers }
       );
@@ -35,6 +36,7 @@ export const addMessage = createAsyncThunk(
 );
 
 // Define the thunk action for uploading a file
+// manually add the file to the form data and update in db
 export const uploadFile = createAsyncThunk(
   'messages/uploadFile',
   async (payload, { rejectWithValue }) => {

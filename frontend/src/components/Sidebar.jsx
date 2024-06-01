@@ -61,7 +61,10 @@ export default function Sidebar({ udpatedSelectedUser }) {
                                 <div>
                                     <h2 className="text-lg font-semibold">{user.userDetails.fullname}</h2>
                                     <p className="text-sm text-gray-400">
-                                        {user.lastMessage.slice(0, 5) + "..."} <br />
+                                    {user.messageType == "text" && user?.lastMessage?.slice(0, 5) + "..."}
+                                    {user.messageType !== "text" && user?.fileName?.slice(0,9)+"..."}
+                                        
+                                         <br />
                                     </p>
                                 </div>
                             </div>
