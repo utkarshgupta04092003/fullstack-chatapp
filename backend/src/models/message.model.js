@@ -1,4 +1,19 @@
 import mongoose from "mongoose";
+
+const reactionSchema = new mongoose.Schema({
+    reaction: {
+        type: String,
+        required: true
+    },
+    user: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        required: true
+    },
+    fullname: {
+        type: String,
+    }
+})
 const messageSchema = new mongoose.Schema(
     {
         message: {
@@ -35,9 +50,7 @@ const messageSchema = new mongoose.Schema(
             ref: "Message",
         },
         reactions: [
-            {
-                type: String,
-            },
+            reactionSchema
         ],
     },
     { timestamps: true }

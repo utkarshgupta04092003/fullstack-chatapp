@@ -7,6 +7,7 @@ import {
     editMessage,
     getMessage,
     getUserList,
+    updateMessageReaction,
 } from "../controllers/message.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
 const router = Router();
@@ -20,4 +21,5 @@ router.route("/editmessage").post(verifyJWT, editMessage);
 
 router.route("/getmessage").post(verifyJWT, getMessage);
 router.route("/getuserlist").post(verifyJWT, getUserList);
+router.route("/updatemessagereaction").post(verifyJWT, updateMessageReaction);
 export default router;

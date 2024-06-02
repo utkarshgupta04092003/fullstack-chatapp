@@ -27,7 +27,7 @@ const addMessage = asyncHandler(async (req, res) => {
         messageType,
         sender,
         receiver,
-        fileName: fileName || ''
+        fileName: fileName || "",
     });
     // check if the message was created successfully
     if (!newMessage) {
@@ -131,7 +131,7 @@ const deleteMessage = asyncHandler(async (req, res) => {
 
 const editMessage = asyncHandler(async (req, res) => {
     const id = req.body.messageId;
-    console.log('id', id)
+    console.log("id", id);
     if (!id) {
         return res
             .status(400)
@@ -143,13 +143,7 @@ const editMessage = asyncHandler(async (req, res) => {
     if (!response) {
         return res
             .status(500)
-            .json(
-                new ApiResponse(
-                    500,
-                    "Did not found the message",
-                    null
-                )
-            );
+            .json(new ApiResponse(500, "Did not found the message", null));
     }
     // check the current login user is owner of this message or not
     if (!req.user?._id.equals(response.sender)) {
@@ -230,17 +224,27 @@ const getMessage = asyncHandler(async (req, res) => {
             },
         },
     ]);
-    // console.log("getmsg", messages);
-    const senderDetails = {_id: req.user._id, fullname: req.user.fullname, avatar: req.user.avatar};
-    const receiverDetails = await User.findById(receiver).select("fullname avatar");
-    if(!receiverDetails) {
+    const senderDetails = {
+        _id: req.user._id,
+        fullname: req.user.fullname,
+        avatar: req.user.avatar,
+    };
+    const receiverDetails =
+        await User.findById(receiver).select("fullname avatar");
+    if (!receiverDetails) {
         return res
             .status(404)
             .json(new ApiResponse(404, "Receiver not found", null));
     }
     return res
         .status(200)
-        .json(new ApiResponse(200, "Message Fetched Successfully", {messages, senderDetails, receiverDetails}));
+        .json(
+            new ApiResponse(200, "Message Fetched Successfully", {
+                messages,
+                senderDetails,
+                receiverDetails,
+            })
+        );
 });
 
 // get the user list with whom the current user has chat either in sent or received
@@ -268,8 +272,8 @@ const getUserList = asyncHandler(async (req, res) => {
                 },
                 lastMessageDate: { $first: "$sendAt" },
                 lastMessage: { $first: "$message" },
-                messageType: { $first: "$messageType"},
-                fileName: { $first: "$fileName"}
+                messageType: { $first: "$messageType" },
+                fileName: { $first: "$fileName" },
             },
         },
         {
@@ -293,7 +297,7 @@ const getUserList = asyncHandler(async (req, res) => {
                 lastMessage: 1,
                 lastMessageDate: 1,
                 messageType: 1,
-                fileName: 1
+                fileName: 1,
             },
         },
         {
@@ -307,6 +311,40 @@ const getUserList = asyncHandler(async (req, res) => {
         );
 });
 
+const updateMessageReaction = asyncHandler(async (req, res) => {
+    const { messageId, user, reaction } = req.body;
+    const message = await Message.findById(messageId);
+    if (!message) {
+        return res
+            .status(500)
+            .json(new ApiResponse(500, "Can not get the message", null));
+    }
+    if (message.sender != user && message.receiver != user) {
+        return res
+            .status(401)
+            .json(
+                new ApiResponse(
+                    401,
+                    "This user can not react to this message",
+                    null
+                )
+            );
+    }
+    const filtered = message.reactions.filter((r)=>(r.user == user && r.reaction==reaction));
+    // if already exist, then remove the reaction and return the response
+    if(filtered.length !== 0){
+        const filteredAfterDelete = message.reactions.filter((r)=>(!(r.user == user && r.reaction==reaction)))
+        message.reactions = filteredAfterDelete;
+        await message.save();
+        return res.status(200).json(new ApiResponse(200,"deleted", message));
+    }
+    message.reactions.push({ reaction, user, fullname: req.user.fullname });
+    await message.save();
+    return res
+        .status(200)
+        .json(new ApiResponse(200, "added", message));
+});
+
 export {
     addMessage,
     addDocument,
@@ -314,4 +352,5 @@ export {
     editMessage,
     getMessage,
     getUserList,
+    updateMessageReaction,
 };

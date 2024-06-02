@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { getMessageRoute } from "../Routes";
 import axios from "axios";
 import { IoMdSend } from "react-icons/io";
@@ -10,6 +10,8 @@ import { FaPlus } from "react-icons/fa";
 import { MdOutlineFileDownload } from "react-icons/md";
 import SenderChat from "./SenderChat";
 import ReceiverChat from "./ReceiverChat";
+import Picker from 'emoji-picker-react';
+import { HiOutlineEmojiHappy } from "react-icons/hi";
 
 
 export default function ChatMessage() {
@@ -56,6 +58,29 @@ export default function ChatMessage() {
     useEffect(() => {
         fetchChats();
     }, [selectedUser]);
+    const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+    const emojiPickerRef = useRef(null);
+
+    const onEmojiClick = (event, emojiObject) => {
+        setInput((prev) => prev + event.emoji)
+    };
+    const handleClickOutside = (event) => {
+        if (emojiPickerRef.current && !emojiPickerRef.current.contains(event.target)) {
+            setShowEmojiPicker(false);
+        }
+    };
+
+    useEffect(() => {
+        if (showEmojiPicker) {
+            document.addEventListener('mousedown', handleClickOutside);
+        } else {
+            document.removeEventListener('mousedown', handleClickOutside);
+        }
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [showEmojiPicker]);
 
     if (!selectedUser) {
         return (
@@ -100,14 +125,14 @@ export default function ChatMessage() {
                         <img src={"/loader.svg"} alt="loader" className="w-24 h-24" />
                     </div>
                 ) : (
-                    <div className="flex-1 space-y-6 overflow-y-auto rounded-xl bg-slate-200 p-4 text-sm leading-6 text-slate-200 shadow-sm   sm:text-base sm:leading-7">
+                    <div className="flex-1 space-y-6 overflow-y-auto rounded-xl bg-slate-200 p-4 pb-10 text-sm leading-6 text-slate-200 shadow-sm   sm:text-base sm:leading-7">
                         {messages?.map((message) =>
                             message?.sender == senderDetails._id ? (
                                 // sender (right side message)
-                                <SenderChat senderDetails={senderDetails} message={message} key={message._id}/>
+                                <SenderChat senderDetails={senderDetails} message={message} key={message._id} />
                             ) : (
                                 // receiver (left side)
-                                <ReceiverChat receiverDetails={receiverDetails} message={message} key={message._id}/>
+                                <ReceiverChat receiverDetails={receiverDetails} message={message} key={message._id} />
                             )
                         )}
                     </div>
@@ -124,7 +149,7 @@ export default function ChatMessage() {
 
                 {
                     isOpen && <div className="absolute -top-10" onClick={() => setIsOpen(!isOpen)}>
-                        <FileUploadComponent receiverDetails={receiverDetails}/>
+                        <FileUploadComponent receiverDetails={receiverDetails} />
                     </div>
 
                 }
@@ -136,11 +161,25 @@ export default function ChatMessage() {
                         <input
                             type="text"
                             placeholder="Type a message..."
-                            className="flex-1 p-2 border border-l-0 border-gray-400 focus:outline-none w-full"
+                            className="flex-1 p-2 border border-x-0 border-gray-400 focus:outline-none w-full"
                             value={input}
                             onChange={(e) => setInput(e.target.value)}
                         />
+                        {/* emoji input */}
+                        <div className="relative bg-white border border-gray-400 border-l-0 mr-4 flex items-center">
+                            <div
+                                onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                                className="text-2xl mr-3 text-white cursor-pointer"
+                            >
+                                <HiOutlineEmojiHappy className="text-gray-900" />
 
+                            </div>
+                            {showEmojiPicker && (
+                                <div className="absolute bottom-full mb-2 right-0" ref={emojiPickerRef}>
+                                    <Picker onEmojiClick={onEmojiClick} />
+                                </div>
+                            )}
+                        </div>
                         <button className="px-4 py-2 bg-blue-500 text-white rounded">
                             Send
                         </button>

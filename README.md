@@ -1,6 +1,8 @@
 ## Deadlines
  - Authentication - 28/05/2024
  - Personalized Chat - 30/05/2024
+ - Edit and delete chat - 01/06/2024
+ - message reaction and chat reply - 03/06/2024
 
 ## DB Design
 
