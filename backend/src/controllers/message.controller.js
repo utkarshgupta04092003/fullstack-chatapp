@@ -119,7 +119,7 @@ const deleteMessage = asyncHandler(async (req, res) => {
     }
     // if this is not text message, delete this document from cloudinary
     if (response.messageType != "text") {
-        deleteFromCloudinary(response.message);
+        deleteFromCloudinary(response.message, response.messageType);
     }
     // delete the message from mongo
     await Message.findByIdAndDelete(id);

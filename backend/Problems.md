@@ -10,4 +10,7 @@
 
 - Patch request is not working for editing the message
 
+- Facing problem while deleting the documents excepts images from the cloudinary (not resolved)
+    - if we want to delete he document other than image, we have to explicitly the resource_type
+
  

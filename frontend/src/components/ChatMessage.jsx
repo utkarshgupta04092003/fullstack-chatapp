@@ -124,13 +124,13 @@ export default function ChatMessage() {
 
                 {
                     isOpen && <div className="absolute -top-10" onClick={() => setIsOpen(!isOpen)}>
-                        <FileUploadComponent receiverDetails={receiverDetails} />
+                        <FileUploadComponent receiverDetails={receiverDetails}/>
                     </div>
 
                 }
                 <form className="flex justify-between items-center mt-4 m-4" onSubmit={(e) => { e.preventDefault(); dispatch(addMessage({ input, receiverId: receiverDetails._id })); setInput("") }}>
                     <div className="w-full flex">
-                        <div className="border border-gray-400 border-r-0 w-10  bg-white  p-3 font-extrabold">
+                        <div className="border border-gray-400 border-r-0 w-10 bg-white cursor-pointer p-3 font-extrabold">
                             <FaPlus onClick={() => setIsOpen(!isOpen)} />
                         </div>
                         <input

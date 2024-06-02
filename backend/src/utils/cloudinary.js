@@ -1,6 +1,7 @@
 import { v2 as cloudinary } from "cloudinary";
 import dotenv from "dotenv";
 import { removeFiles } from "./removeFiles.js";
+import {ApiError} from './ApiError.js';
 dotenv.config();
 cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -32,17 +33,19 @@ function extractPublicId(url) {
   }
 
 
-const deleteFromCloudinary = async (cloudinaryURL) => {
+const deleteFromCloudinary = async (cloudinaryURL, resourceType = 'image') => {
     try {
         // get the public id from cloudinary public url
         const publicId = extractPublicId(cloudinaryURL);
-        const response = await cloudinary.uploader.destroy(publicId);
+        if(resourceType == 'pdf')
+            resourceType = 'image';
+        const response = await cloudinary.uploader.destroy(publicId, { resource_type: resourceType });
+        // console.log('cloudinary resposne delete\n', response)
         if(response.result !== 'ok'){
-            throw new ApiError(500, "Something went wrong while deleting previous cloudinary image");
+            throw new ApiError(500, "Something went wrong while deleting cloudinary");
         }
-        // console.log("Deleted from cloudinary");
     } catch (error) {
-        throw new ApiError(500, error.message);
+        console.log("Error in deleting the file from cloudinary", error)
     }
 };
 
