@@ -10,7 +10,7 @@ import {
 import { User } from "../models/user.model.js";
 
 const addMessage = asyncHandler(async (req, res) => {
-    const { message, messageType, receiver, fileName } = req.body;
+    const { message, messageType, receiver, fileName, parentMessage } = req.body;
     // check the required fields
     if (!message || !messageType || !receiver) {
         return res
@@ -28,6 +28,7 @@ const addMessage = asyncHandler(async (req, res) => {
         sender,
         receiver,
         fileName: fileName || "",
+        parentMessage: parentMessage || null,
     });
     // check if the message was created successfully
     if (!newMessage) {

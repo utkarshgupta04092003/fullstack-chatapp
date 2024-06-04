@@ -12,6 +12,7 @@ import SenderChat from "./SenderChat";
 import ReceiverChat from "./ReceiverChat";
 import Picker from 'emoji-picker-react';
 import { HiOutlineEmojiHappy } from "react-icons/hi";
+import { setParentMessage } from "../redux/parentMessageSlice";
 
 
 export default function ChatMessage() {
@@ -27,6 +28,7 @@ export default function ChatMessage() {
 
     const dispatch = useDispatch();
     const { messages } = useSelector((state) => state.messages);
+    const { parentMessage } = useSelector((state) => state.parentMessage);
     const fetchChats = async () => {
         console.log("selected user changed");
         try {
@@ -81,6 +83,13 @@ export default function ChatMessage() {
             document.removeEventListener('mousedown', handleClickOutside);
         };
     }, [showEmojiPicker]);
+
+    const handleSendMessage = (e) => { 
+        e.preventDefault(); 
+        dispatch(addMessage({ input, receiverId: receiverDetails._id, parentMessage })); 
+        setInput("");
+        dispatch(setParentMessage(null));
+    }
 
     if (!selectedUser) {
         return (
@@ -146,14 +155,14 @@ export default function ChatMessage() {
                     <input type="file" name="photos" id="photos" onChange={(e)=>setPhotos(e.target.files[0])}/>
                     <button className="border border-red-500" onClick={()=>dispatch(uploadFile({photos, receiverId: receiverDetails._id}))}>Upload</button>
                 </div> */}
-
                 {
                     isOpen && <div className="absolute -top-10" onClick={() => setIsOpen(!isOpen)}>
                         <FileUploadComponent receiverDetails={receiverDetails} />
                     </div>
 
                 }
-                <form className="flex justify-between items-center mt-4 m-4" onSubmit={(e) => { e.preventDefault(); dispatch(addMessage({ input, receiverId: receiverDetails._id })); setInput("") }}>
+                {/* parent{parentMessage?.message} */}
+                <form className="flex justify-between items-center mt-4 m-4" onSubmit={handleSendMessage}>
                     <div className="w-full flex">
                         <div className="border border-gray-400 border-r-0 w-10 bg-white cursor-pointer p-3 font-extrabold">
                             <FaPlus onClick={() => setIsOpen(!isOpen)} />

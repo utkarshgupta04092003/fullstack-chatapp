@@ -1,3 +1,4 @@
+// optimize code before commit, remove unused imports, console logs, comments etc
 import axios from 'axios';
 import React, { useEffect, useRef, useState } from 'react'
 import { IoMdMore } from "react-icons/io";
@@ -8,11 +9,14 @@ import { deleteTimeLimit, editTimeLimit } from '../utils/constant';
 import { Toaster, toast } from 'react-hot-toast';
 import Picker from 'emoji-picker-react';
 import { HiOutlineEmojiHappy } from "react-icons/hi";
+import { useDispatch } from 'react-redux';
+import { setParentMessage } from '../redux/parentMessageSlice';
 
 export default function ReceiverChat({ receiverDetails, message }) {
     const [isOpenReaction, setIsOpenReaction] = useState(false);
     const [reactions, setReactions] = useState(message.reactions);
     const [isOptionOpen, setIsOptionOpen] = useState(false);
+    const dispatch = useDispatch();
 
     const messagePopUpRef = useRef(null);
     const handleClickOutside = (event) => {
@@ -89,7 +93,7 @@ export default function ReceiverChat({ receiverDetails, message }) {
             <div className="flex rounded-b-xl group/reaction rounded-tr-xl bg-slate-50 p-2 dark:bg-slate-800 sm:max-w-md md:max-w-2xl">
                 {// for text message    
                     message.messageType == "text" &&
-                    <div className='flex'>
+                    <div className='flex cursor-pointer' onDoubleClick={()=>dispatch(setParentMessage(message))}>
                         <div className="flex-1">
                             <p className="flex break-words break-all">
                                 <p>{message.message}</p>

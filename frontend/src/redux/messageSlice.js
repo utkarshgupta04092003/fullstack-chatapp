@@ -24,7 +24,8 @@ export const addMessage = createAsyncThunk(
           message: payload.input,
           messageType: payload.messageType || "text",
           receiver: payload.receiverId,
-          fileName: payload.fileName
+          fileName: payload.fileName,
+          parentMessage: payload.parentMessage || null,
         },
         { headers }
       );

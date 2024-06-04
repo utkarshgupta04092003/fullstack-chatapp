@@ -8,19 +8,28 @@ import { deleteTimeLimit, editTimeLimit } from '../utils/constant';
 import { Toaster, toast } from 'react-hot-toast';
 import Picker from 'emoji-picker-react';
 import { HiOutlineEmojiHappy } from "react-icons/hi";
+import { useDispatch, useSelector } from 'react-redux';
+import { setParentMessage } from '../redux/parentMessageSlice';
 
+// import components
+
+import TextMessage from './displayMessages/TextMessage';
+import ImageMessage from './displayMessages/ImageMessage';
+import PDFMessage from './displayMessages/PDFMessage';
+import RawMessage from './displayMessages/RawMessage';
+import VideoMessage from './displayMessages/VideoMessage';
 
 export default function SenderChat({ senderDetails, message }) {
 
     const [isOptionOpen, setIsOptionOpen] = useState(false);
     const [editedMessage, setEditedMessage] = useState(null);
-    const [isEditable, setIsEditable] = useState((new Date() - new Date(message.sendAt)) < editTimeLimit);
     const [isDeletabble, setIsDeletable] = useState((new Date() - new Date(message.sendAt)) < deleteTimeLimit);
     const [isDeleted, setIsDeleted] = useState(false);
     const [isOpenReaction, setIsOpenReaction] = useState(false);
     const [reactions, setReactions] = useState(message.reactions);
-
+    const dispatch = useDispatch();
     const messagePopUpRef = useRef(null);
+
     const handleClickOutside = (event) => {
         if (messagePopUpRef.current && !messagePopUpRef.current.contains(event.target)) {
             setIsOptionOpen(false);
@@ -37,63 +46,6 @@ export default function SenderChat({ senderDetails, message }) {
             document.removeEventListener('mousedown', handleClickOutside);
         };
     }, [isOptionOpen]);
-
-    const handleEditMessage = () => {
-        // if the send time out for editing time
-        if ((new Date() - new Date(message.sendAt)) > editTimeLimit) {
-            toast.error('This message can not be edited now', {
-                style: {
-                    background: '#1e293b',
-                    color: '#e2e8f0',
-                }
-            });
-            // setIsOptionOpen(false);
-            return;
-        }
-        Swal.fire({
-            text: 'Edit message:',
-            color: "#e2e8f0",
-            input: 'text',
-            inputAttributes: {
-                autocapitalize: 'off',
-            },
-            showCancelButton: true,
-            confirmButtonText: 'Save',
-            confirmButtonColor: '#3085d6', // Blue color
-            cancelButtonText: 'Close',
-            background: '#1e293b',
-            customClass: {
-                title: 'swal2-title text-blue-500 font-bold', // Blue text
-                confirmButton: 'swal2-button swal2-button--confirm bg-blue-500 text-white font-bold', // Blue button
-            },
-            preConfirm: async (inputValue) => {
-                try {
-                    const user = JSON.parse(localStorage.getItem("user")) || null;
-                    if (!user || !user.accessToken) {
-                        console.error("access token is invalid");
-                        return;
-                    }
-                    console.log('token', user?.accessToken)
-                    const headers = {
-                        Authorization: `Bearer ${user?.accessToken}`,
-                    };
-                    console.log(inputValue, message._id);
-                    const { data } = await axios.post(editMessageRoute, {
-                        messageId: message._id,
-                        message: inputValue
-                    }, {
-                        headers
-                    })
-                    setEditedMessage(data.data.message);
-                } catch (error) {
-                    console.error("Error in updating the message");
-                }
-                finally {
-                    setIsOptionOpen(false);
-                }
-            }
-        })
-    }
 
     const handleDelete = async () => {
         if ((new Date() - new Date(message.sendAt)) > deleteTimeLimit) {
@@ -173,7 +125,6 @@ export default function SenderChat({ senderDetails, message }) {
         }
         setIsOpenReaction(false);
     };
-
     
     const getReactionListHtml = () => {
         const listItems = reactions.map((r) => (
@@ -182,7 +133,6 @@ export default function SenderChat({ senderDetails, message }) {
                 <p class="text-gray-700">${r.reaction}</p>
             </li>`
         ));
-
         return `
           <h2 class="text-xl font-bold m-2">Reaction List</h2>
           <ul className="border border-red-500">
@@ -206,243 +156,25 @@ export default function SenderChat({ senderDetails, message }) {
                 className="ml-2 h-8 w-8 rounded-full"
                 src={senderDetails?.avatar}
             />
-            <div className="flex min-h-[85px] rounded-b-xl rounded-tl-xl bg-slate-50 p-2 dark:bg-slate-800 sm:min-h-0 sm:max-w-md md:max-w-2xl group/reaction">
-                {/* text message */}
+            <div className="flex min-h-[85px] rounded-b-xl rounded-tl-xl bg-slate-50 p-2 dark:bg-slate-800 sm:min-h-0 sm:max-w-md md:max-w-2xl group/reaction"  onDoubleClick={()=>dispatch(setParentMessage(message))}>
                 {
-                    message.messageType == "text" &&
-                    <div className='flex'>
-                        <div className={`relative hidden h-full group-hover/reaction:flex items-center`}>
-                            <div className="absolute flex -left-10 text-black text-2xl">
-                                <HiOutlineEmojiHappy className="text-gray-900 mx-1 bg-gray cursor-pointer" onClick={() => setIsOpenReaction(!isOpenReaction)} />
-                                <div className='absolute -top-2 right-7'>
-
-                                    {isOpenReaction && <Picker reactionsDefaultOpen={true} onReactionClick={handleReaction} onEmojiClick={handleReaction} />}
-                                </div>
-                            </div>
-
-
-                        </div>
-                        <div className="flex-1">
-                            <p className="flex break-words break-all">
-
-                                <p>{editedMessage || message.message}</p>
-                                <p className="ml-2 cursor-pointer">
-                                    <IoMdMore onClick={() => setIsOptionOpen(!isOptionOpen)} />
-                                </p>
-
-                                <div className='relative' ref={messagePopUpRef}>
-
-                                    {isOptionOpen && <div className='absolute top-6 -left-6 flex-col rounded-lg bg-gray-800 px-1 w-[65px] text-center'>
-                                        {
-                                            isEditable && <button className='w-full cursor-pointer hover:text-gray-600 hover:rounded my-1 hover:bg-slate-200' onClick={handleEditMessage} disabled={!isEditable}>Edit</button>
-
-                                        }
-                                        {
-                                            isDeletabble && <button className="w-full hover:text-gray-600 hover:rounded my-1 hover:bg-slate-200 cursor-pointer" onClick={handleDelete}>Delete</button>
-                                        }
-                                    </div>}
-                                </div>
-
-                            </p>
-                            <div className='text-xs text-right bottom-1 flex justify-between'>
-                                <div className='relative cursor-pointer' onClick={showAllEmojiList}>
-                                    {
-                                        reactions && reactions.length != 0 && reactions[0].user &&
-                                        <div className="absolute top-3 left-3 rounded-2xl px-2 text-black text-base flex items-center border border-gray-500 bg-slate-200">
-                                            <p className='text-lg'>{reactions[reactions.length - 1].reaction}</p>
-                                            <span className='ml-1'>{reactions.length}</span>
-                                        </div>
-                                    }
-                                </div>
-                                <div>
-                                    {(new Date(message.sendAt)).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    message.messageType == "text" && 
+                    <TextMessage message={message} senderDetails={senderDetails} setIsDeleted={setIsDeleted} handleDelete={handleDelete} messageSide="sender"/>
                 }
                 {
                     (['image', 'jpg', 'jpeg', 'png'].filter((f) => f === message.messageType)).length != 0 &&
-                    <div className="flex">
-
-                        <div className={`relative hidden h-full group-hover/reaction:flex items-center`}>
-                            <div className="absolute flex -left-10 text-black text-2xl">
-                                <HiOutlineEmojiHappy className="text-gray-900 mx-1 bg-gray cursor-pointer" onClick={() => setIsOpenReaction(!isOpenReaction)} />
-                                <div className='absolute -top-2 right-7'>
-                                    {isOpenReaction && <Picker reactionsDefaultOpen={true} onReactionClick={handleReaction} onEmojiClick={handleReaction} />}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="flex-1">
-                            <div className="flex">
-                                <img src={message.message} alt={message.messageType} className="h-56 w-56 rounded-lg" />
-                                <p className="ml-2 cursor-pointer">
-                                    <IoMdMore onClick={() => setIsOptionOpen(!isOptionOpen)} />
-                                </p>
-
-                                <div className='relative' ref={messagePopUpRef}>
-
-                                    {isOptionOpen && <div className='absolute top-6 -left-6 flex-col rounded-lg bg-gray-800 px-1 w-[65px] text-center'>
-                                        {
-                                            isDeletabble && <button className="w-full hover:text-gray-600 hover:rounded my-1 hover:bg-slate-200 cursor-pointer" onClick={handleDelete}>Delete</button>
-                                        }
-                                    </div>}
-                                </div>
-                            </div>
-                            <div className='text-xs text-right bottom-1 flex justify-between'>
-                                <div className='relative cursor-pointer' onClick={showAllEmojiList}>
-                                    {
-                                        reactions && reactions.length != 0 && reactions[0].user &&
-                                        <div className="absolute top-3 left-3 rounded-2xl px-2 text-black text-base flex items-center border border-gray-500 bg-slate-200">
-                                            <p className='text-lg'>{reactions[reactions.length - 1].reaction}</p>
-                                            <span className='ml-1'>{reactions.length}</span>
-                                        </div>
-                                    }
-                                </div>
-                                <div>
-                                    {(new Date(message.sendAt)).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    <ImageMessage message={message} senderDetails={senderDetails} handleDelete={handleDelete}/>
                 }
                 {
                     message.messageType == "pdf" &&
-                    <div className="flex">
-                        <div className={`relative hidden h-full group-hover/reaction:flex items-center`}>
-                            <div className="absolute flex -left-10 text-black text-2xl">
-                                <HiOutlineEmojiHappy className="text-gray-900 mx-1 bg-gray cursor-pointer" onClick={() => setIsOpenReaction(!isOpenReaction)} />
-                                <div className='absolute -top-2 right-7'>
-                                    {isOpenReaction && <Picker reactionsDefaultOpen={true} onReactionClick={handleReaction} onEmojiClick={handleReaction} />}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div>
-                            <p className="flex items-center">{message.fileName}.pdf
-                                <a href={message.message} download target="_blank">
-                                    <MdOutlineFileDownload className="text-2xl" />
-                                </a>
-                                <p className="ml-2 cursor-pointer">
-                                    <IoMdMore onClick={() => setIsOptionOpen(!isOptionOpen)} />
-                                </p>
-
-                                <div className='relative' ref={messagePopUpRef}>
-
-                                    {isOptionOpen && <div className='absolute top-6 -left-6 flex-col rounded-lg bg-gray-800 px-1 w-[65px] text-center'>
-                                        {
-                                            isDeletabble && <button className="w-full hover:text-gray-600 hover:rounded my-1 hover:bg-slate-200 cursor-pointer" onClick={handleDelete}>Delete</button>
-                                        }
-                                    </div>}
-                                </div>
-                            </p>
-                            <div className='text-xs text-right bottom-1 flex justify-between'>
-                                <div className='relative cursor-pointer' onClick={showAllEmojiList}>
-                                    {
-                                        reactions && reactions.length != 0 && reactions[0].user &&
-                                        <div className="absolute top-3 left-3 rounded-2xl px-2 text-black text-base flex items-center border border-gray-500 bg-slate-200">
-                                            <p className='text-lg'>{reactions[reactions.length - 1].reaction}</p>
-                                            <span className='ml-1'>{reactions.length}</span>
-                                        </div>
-                                    }
-                                </div>
-                                <div>
-                                    {(new Date(message.sendAt)).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    <PDFMessage message={message} senderDetails={senderDetails} handleDelete={handleDelete}/>
                 }
                 {// for all type of document like excel, word, text etc
                     message.messageType == "raw" &&
-                    <div className="flex">
-                        <div className={`relative hidden h-full group-hover/reaction:flex items-center`}>
-                            <div className="absolute flex -left-10 text-black text-2xl">
-                                <HiOutlineEmojiHappy className="text-gray-900 mx-1 bg-gray cursor-pointer" onClick={() => setIsOpenReaction(!isOpenReaction)} />
-                                <div className='absolute -top-2 right-7'>
-                                    {isOpenReaction && <Picker reactionsDefaultOpen={true} onReactionClick={handleReaction} onEmojiClick={handleReaction} />}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div>
-                            <p className="flex items-center">{message.fileName}
-                                <a href={message.message} download target="_blank">
-                                    <MdOutlineFileDownload className="text-2xl" />
-                                </a><p className="ml-2 cursor-pointer">
-                                    <IoMdMore onClick={() => setIsOptionOpen(!isOptionOpen)} />
-                                </p>
-
-                                <div className='relative' ref={messagePopUpRef}>
-
-                                    {isOptionOpen && <div className='absolute top-6 -left-6 flex-col rounded-lg bg-gray-800 px-1 w-[65px] text-center'>
-                                        {
-                                            isDeletabble && <button className="w-full hover:text-gray-600 hover:rounded my-1 hover:bg-slate-200 cursor-pointer" onClick={handleDelete}>Delete</button>
-                                        }
-                                    </div>}
-                                </div>
-                            </p>
-                            <div className='text-xs text-right bottom-1 flex justify-between'>
-                                <div className='relative cursor-pointer' onClick={showAllEmojiList}>
-                                    {
-                                        reactions && reactions.length != 0 && reactions[0].user &&
-                                        <div className="absolute top-3 left-3 rounded-2xl px-2 text-black text-base flex items-center border border-gray-500 bg-slate-200">
-                                            <p className='text-lg'>{reactions[reactions.length - 1].reaction}</p>
-                                            <span className='ml-1'>{reactions.length}</span>
-                                        </div>
-                                    }
-                                </div>
-                                <div>
-                                    {(new Date(message.sendAt)).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                }
+                    <RawMessage message={message} senderDetails={senderDetails} handleDelete={handleDelete} />}
                 {
                     (['video', 'mp4'].filter((f) => f === message.messageType)).length != 0 &&
-                    <div className="flex">
-                        <div className={`relative hidden h-full group-hover/reaction:flex items-center`}>
-                            <div className="absolute flex -left-10 text-black text-2xl">
-                                <HiOutlineEmojiHappy className="text-gray-900 mx-1 bg-gray cursor-pointer" onClick={() => setIsOpenReaction(!isOpenReaction)} />
-                                <div className='absolute -top-2 right-7'>
-                                    {isOpenReaction && <Picker reactionsDefaultOpen={true} onReactionClick={handleReaction} onEmojiClick={handleReaction} />}
-                                </div>
-                            </div>
-                        </div>
-                        <div>
-                            <div className='flex'>
-                                <video controls width="400" height="">
-                                    <source src={message.message} type="video/mp4" />
-                                </video>
-                                <p className="ml-2 cursor-pointer">
-                                    <IoMdMore onClick={() => setIsOptionOpen(!isOptionOpen)} />
-                                </p>
-                                <div className='relative' ref={messagePopUpRef}>
-                                    {isOptionOpen && <div className='absolute top-6 -left-6 flex-col rounded-lg bg-gray-800 px-1 w-[65px] text-center'>
-                                        {
-                                            isDeletabble && <button className="w-full hover:text-gray-600 hover:rounded my-1 hover:bg-slate-200 cursor-pointer" onClick={handleDelete}>Delete</button>
-                                        }
-                                    </div>}
-                                </div>
-                            </div>
-                            <div className='text-xs text-right bottom-1 flex justify-between'>
-                                <div className='relative cursor-pointer' onClick={showAllEmojiList}>
-                                    {
-                                        reactions && reactions.length != 0 && reactions[0].user &&
-                                        <div className="absolute top-3 left-3 rounded-2xl px-2 text-black text-base flex items-center border border-gray-500 bg-slate-200">
-                                            <p className='text-lg'>{reactions[reactions.length - 1].reaction}</p>
-                                            <span className='ml-1'>{reactions.length}</span>
-                                        </div>
-                                    }
-                                </div>
-                                <div>
-                                    {(new Date(message.sendAt)).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    <VideoMessage message={message} senderDetails={senderDetails} handleDelete={handleDelete}/>
                 }
                 {
                     (['text', 'jpg', 'jpeg', 'png', 'image', 'video', 'mp4', 'pdf', 'raw'].filter((f) => f === message.messageType)).length == 0 &&
