@@ -36,6 +36,8 @@ const addMessage = asyncHandler(async (req, res) => {
             .status(500)
             .json(new ApiResponse(500, "Message could not be created", null));
     }
+    // populate the parent message
+    await newMessage.populate("parentMessage");
     // send the response
     return res
         .status(201)
@@ -132,7 +134,7 @@ const deleteMessage = asyncHandler(async (req, res) => {
 
 const editMessage = asyncHandler(async (req, res) => {
     const id = req.body.messageId;
-    console.log("id", id);
+
     if (!id) {
         return res
             .status(400)
@@ -140,7 +142,7 @@ const editMessage = asyncHandler(async (req, res) => {
     }
     // find the message details
     const response = await Message.findById(id);
-    console.log(response);
+
     if (!response) {
         return res
             .status(500)
@@ -209,6 +211,20 @@ const getMessage = asyncHandler(async (req, res) => {
             },
         },
         {
+            $lookup: {
+                from: 'messages',
+                localField: 'parentMessage',
+                foreignField: '_id',
+                as: 'parentMessage',
+            }
+        },
+        {
+            $unwind: {
+                path: '$parentMessage',
+                preserveNullAndEmptyArrays: true,
+            }
+        },
+        {
             $sort: {
                 sendAt: -1, // Sort by sendAt in descending order to get the latest messages first
             },
@@ -251,7 +267,7 @@ const getMessage = asyncHandler(async (req, res) => {
 // get the user list with whom the current user has chat either in sent or received
 // with user details, last message and last message date and sorted by last message date
 const getUserList = asyncHandler(async (req, res) => {
-    console.log("working getuserlist");
+
     const userId = req.user._id;
     const chatUsers = await Message.aggregate([
         {

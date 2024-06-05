@@ -1,21 +1,19 @@
-import React, {useState, useEffect, useRef} from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { HiOutlineEmojiHappy } from "react-icons/hi";
 import { IoMdMore } from "react-icons/io";
-import { MdOutlineFileDownload } from "react-icons/md";
 import { useDispatch, useSelector } from 'react-redux';
 import axios from 'axios';
 import { deleteTimeLimit } from '../../utils/constant';
 import { updateMessageReaction } from '../../Routes';
 import Picker from 'emoji-picker-react';
 import Swal from 'sweetalert2';
-
-export default function VideoMessage({message, senderDetails, handleDelete}) {
+import { setParentMessage } from '../../redux/parentMessageSlice';
+export default function VideoMessage({ message, handleDelete }) {
     const [isOptionOpen, setIsOptionOpen] = useState(false);
     const [isOpenReaction, setIsOpenReaction] = useState(false);
-    const [isDeletabble, setIsDeletable] = useState((new Date() - new Date(message.sendAt)) < deleteTimeLimit);
+    const [isDeletabble] = useState((new Date() - new Date(message.sendAt)) < deleteTimeLimit);
     const [reactions, setReactions] = useState(message.reactions);
     const dispatch = useDispatch();
-    const parentMessage = useSelector((state) => state.parentMessage.parentMessage);
     const messagePopUpRef = useRef(null);
     const handleClickOutside = (event) => {
         if (messagePopUpRef.current && !messagePopUpRef.current.contains(event.target)) {
@@ -28,12 +26,10 @@ export default function VideoMessage({message, senderDetails, handleDelete}) {
         } else {
             document.removeEventListener('mousedown', handleClickOutside);
         }
-
         return () => {
             document.removeEventListener('mousedown', handleClickOutside);
         };
     }, [isOptionOpen]);
-
     const handleReaction = async (event, emojiObject) => {
         const user = JSON.parse(localStorage.getItem("user")) || null;
         const headers = {
@@ -49,7 +45,6 @@ export default function VideoMessage({message, senderDetails, handleDelete}) {
         }
         setIsOpenReaction(false);
     };
-
     const getReactionListHtml = () => {
         const listItems = reactions.map((r) => (
             `<li key="${r.id || r.reaction}" class="flex border border-gray-500 p-2 justify-between w-2/3 m-auto">
@@ -64,7 +59,6 @@ export default function VideoMessage({message, senderDetails, handleDelete}) {
           </ul>
         `;
     };
-
     const showAllEmojiList = () => {
         const htmlContent = getReactionListHtml();
         Swal.fire({
@@ -74,11 +68,11 @@ export default function VideoMessage({message, senderDetails, handleDelete}) {
         })
     }
     return (
-        <div className="flex">
+        <div className="flex" onDoubleClick={() => dispatch(setParentMessage(message))}>
             <div className={`relative hidden h-full group-hover/reaction:flex items-center`}>
-                <div className="absolute flex -left-10 text-black text-2xl">
+                <div className="absolute flex -left-10 top-1 text-black text-2xl h-[200px] items-center">
                     <HiOutlineEmojiHappy className="text-gray-900 mx-1 bg-gray cursor-pointer" onClick={() => setIsOpenReaction(!isOpenReaction)} />
-                    <div className='absolute -top-2 right-7'>
+                    <div className='absolute right-7'>
                         {isOpenReaction && <Picker reactionsDefaultOpen={true} onReactionClick={handleReaction} onEmojiClick={handleReaction} />}
                     </div>
                 </div>
@@ -114,6 +108,6 @@ export default function VideoMessage({message, senderDetails, handleDelete}) {
                     </div>
                 </div>
             </div>
-        </div>           
+        </div>
     )
 }

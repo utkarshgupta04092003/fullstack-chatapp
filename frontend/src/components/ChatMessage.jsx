@@ -2,19 +2,17 @@ import React, { useEffect, useRef, useState } from "react";
 import { getMessageRoute } from "../Routes";
 import axios from "axios";
 import { IoMdSend } from "react-icons/io";
-import { Link, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { addMessage, setMessages, uploadFile } from "../redux/messageSlice";
+import { addMessage, setMessages } from "../redux/messageSlice";
 import FileUploadComponent from "./FileUploadComponent";
 import { FaPlus } from "react-icons/fa";
-import { MdOutlineFileDownload } from "react-icons/md";
 import SenderChat from "./SenderChat";
 import ReceiverChat from "./ReceiverChat";
 import Picker from 'emoji-picker-react';
 import { HiOutlineEmojiHappy } from "react-icons/hi";
 import { setParentMessage } from "../redux/parentMessageSlice";
-
-
+import { IoCloseCircleOutline } from "react-icons/io5";
 export default function ChatMessage() {
     const { receiverId } = useParams();
     const selectedUser = receiverId;
@@ -23,14 +21,11 @@ export default function ChatMessage() {
     const [senderDetails, setSenderDetails] = useState({});
     const [receiverDetails, setReceiverDetails] = useState({});
     const [isLoading, setIsLoading] = useState(false);
-    // const [photos, setPhotos] = useState(null);
     const [isOpen, setIsOpen] = useState(false);
-
     const dispatch = useDispatch();
     const { messages } = useSelector((state) => state.messages);
     const { parentMessage } = useSelector((state) => state.parentMessage);
     const fetchChats = async () => {
-        console.log("selected user changed");
         try {
             setIsLoading(true);
             const user = JSON.parse(localStorage.getItem("user")) || null;
@@ -45,9 +40,6 @@ export default function ChatMessage() {
                 },
                 { headers }
             );
-            console.log("chat data", data.data.messages);
-            console.log("selected", selectedUser);
-            // setMessages(data.data.messages);
             dispatch(setMessages(data.data.messages));
             setSenderDetails(data.data.senderDetails);
             setReceiverDetails(data.data.receiverDetails);
@@ -59,10 +51,10 @@ export default function ChatMessage() {
     };
     useEffect(() => {
         fetchChats();
+        return () => dispatch(setParentMessage(null));
     }, [selectedUser]);
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const emojiPickerRef = useRef(null);
-
     const onEmojiClick = (event, emojiObject) => {
         setInput((prev) => prev + event.emoji)
     };
@@ -71,26 +63,33 @@ export default function ChatMessage() {
             setShowEmojiPicker(false);
         }
     };
-
     useEffect(() => {
         if (showEmojiPicker) {
             document.addEventListener('mousedown', handleClickOutside);
         } else {
             document.removeEventListener('mousedown', handleClickOutside);
         }
-
         return () => {
             document.removeEventListener('mousedown', handleClickOutside);
         };
     }, [showEmojiPicker]);
-
-    const handleSendMessage = (e) => { 
-        e.preventDefault(); 
-        dispatch(addMessage({ input, receiverId: receiverDetails._id, parentMessage })); 
+    const handleSendMessage = (e) => {
+        e.preventDefault();
+        dispatch(addMessage({ input, receiverId: receiverDetails._id, parentMessage }));
         setInput("");
         dispatch(setParentMessage(null));
     }
-
+    const messageRefs = useRef({});
+    const scrollToMessage = (messageId) => {
+        const messageElement = messageRefs.current[messageId];
+        if (messageElement) {
+            messageElement.scrollIntoView({ behavior: 'smooth' });
+            messageElement.className = 'animate-pulse';
+            setTimeout(() => {
+                messageElement.className = 'animate-none';
+            }, 2000);
+        }
+    };
     if (!selectedUser) {
         return (
             <div className="bg-slate-200 h-screen flex justify-center items-center w-3/4">
@@ -102,10 +101,10 @@ export default function ChatMessage() {
         );
     }
     return (
-        <div className="flex-1 bor der border-red-500">
+        <div className="flex-1">
             <div className="flex justify-between items-center bg-gray-700 p-3 mb-4">
                 {isLoading ? (
-                    <div className="text-center w-full text-white font-semibold h-9 ">
+                    <div className="text-center w-full text-white font-semibold h-9">
                         Loading Chat Details...
                     </div>
                 ) : (
@@ -134,35 +133,80 @@ export default function ChatMessage() {
                         <img src={"/loader.svg"} alt="loader" className="w-24 h-24" />
                     </div>
                 ) : (
-                    <div className="flex-1 space-y-6 overflow-y-auto rounded-xl bg-slate-200 p-4 pb-10 text-sm leading-6 text-slate-200 shadow-sm   sm:text-base sm:leading-7">
+                    <div className="flex-1 space-y-6 overflow-y-auto rounded-xl bg-slate-200 p-4 pb-10 text-sm leading-6 text-slate-200 shadow-sm sm:text-base sm:leading-7">
                         {messages?.map((message) =>
-                            message?.sender == senderDetails._id ? (
-                                // sender (right side message)
-                                <SenderChat senderDetails={senderDetails} message={message} key={message._id} />
-                            ) : (
-                                // receiver (left side)
-                                <ReceiverChat receiverDetails={receiverDetails} message={message} key={message._id} />
-                            )
+                            <div ref={(el) => (messageRefs.current[message._id] = el)}>
+                                {message?.sender == senderDetails._id ? (
+                                    // sender (right side message)
+                                    <SenderChat senderDetails={senderDetails} receiverDetails={receiverDetails} message={message} key={message._id} scrollToMessage={scrollToMessage} />
+                                ) : (
+                                    // receiver (left side)
+                                    <ReceiverChat senderDetails={senderDetails} receiverDetails={receiverDetails} message={message} key={message._id} scrollToMessage={scrollToMessage} />
+                                )}
+                            </div>
                         )}
                     </div>
                 )}
             </div>
             {/* Message input */}
             <div className="relative">
-
                 {/* manually upload document without widget */}
                 {/* <div className="flex justify-between items-center bg-gray-700 p-3">
                     <input type="file" name="photos" id="photos" onChange={(e)=>setPhotos(e.target.files[0])}/>
                     <button className="border border-red-500" onClick={()=>dispatch(uploadFile({photos, receiverId: receiverDetails._id}))}>Upload</button>
                 </div> */}
                 {
-                    isOpen && <div className="absolute -top-10" onClick={() => setIsOpen(!isOpen)}>
+                    isOpen && <div className="absolute -top-10 z-10" onClick={() => setIsOpen(!isOpen)}>
                         <FileUploadComponent receiverDetails={receiverDetails} />
                     </div>
-
                 }
-                {/* parent{parentMessage?.message} */}
-                <form className="flex justify-between items-center mt-4 m-4" onSubmit={handleSendMessage}>
+                {/* parent message design */}
+                <div className="relative w-full bg-slate-200">
+                    <p className="absolute bottom-1 w-full bg-slate-200">
+                        {
+                            parentMessage && parentMessage.length != 0 &&
+                            <div className="pl-5 p-1 flex">
+                                <span className="border border-gray-900 rounded-l-lg w-[5px] bg-gray-900"></span>
+                                <figure className="flex w-[90%] pl-1 p-1 border border-gray-300 rounded-r-xs items-center bg-slate-50">
+                                    {
+                                        (['image', 'jpg', 'jpeg', 'png'].filter((f) => f === parentMessage?.messageType)).length != 0 ?
+                                            <>
+                                                <img src={parentMessage?.message} alt="image" className="w-10 h-10" />
+                                                <figcaption className="ml-2">
+                                                    <p className="font-bold capitalize text-gray-500">
+                                                        {parentMessage.sender == senderDetails._id ? senderDetails?.fullname : receiverDetails?.fullname}
+                                                    </p>
+                                                    <p className="text-sm p-0 text-slate-500">{parentMessage?.fileName || "Image"}</p>
+                                                </figcaption>
+                                            </>
+                                            :
+                                            parentMessage.messageType == "text" ?
+                                                <>
+                                                    <figcaption className="ml-2">
+                                                        <p className="font-bold capitalize text-gray-500">
+                                                            {parentMessage.sender == senderDetails._id ? senderDetails?.fullname : receiverDetails?.fullname}
+                                                        </p>
+                                                        <p className="text-sm p-0 text-slate-500">{parentMessage?.message || "Message"}</p>
+                                                    </figcaption>
+                                                </> :
+                                                <>
+                                                    <figcaption className="ml-2">
+                                                        <p className="font-bold capitalize text-gray-500">
+                                                            {parentMessage.sender == senderDetails._id ? senderDetails?.fullname : receiverDetails?.fullname}
+                                                        </p>
+                                                        <p className="text-sm p-0 text-slate-500">{parentMessage?.fileName || "file"}</p>
+                                                    </figcaption>
+                                                </>
+                                    }
+                                </figure>
+                                <p className="relative" onClick={() => dispatch(setParentMessage(null))}>
+                                    <IoCloseCircleOutline className="text-2xl absolute -left-8 top-1 cursor-pointer" /></p>
+                            </div>
+                        }
+                    </p>
+                </div>
+                {/* input field */}
+                <form className="flex justify-between items-center mt-1 m-4" onSubmit={handleSendMessage}>
                     <div className="w-full flex">
                         <div className="border border-gray-400 border-r-0 w-10 bg-white cursor-pointer p-3 font-extrabold">
                             <FaPlus onClick={() => setIsOpen(!isOpen)} />
@@ -181,7 +225,6 @@ export default function ChatMessage() {
                                 className="text-2xl mr-3 text-white cursor-pointer"
                             >
                                 <HiOutlineEmojiHappy className="text-gray-900" />
-
                             </div>
                             {showEmojiPicker && (
                                 <div className="absolute bottom-full mb-2 right-0" ref={emojiPickerRef}>

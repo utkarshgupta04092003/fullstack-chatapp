@@ -4,22 +4,18 @@ import Swal from 'sweetalert2';
 import Picker from 'emoji-picker-react';
 import { HiOutlineEmojiHappy } from "react-icons/hi";
 import { IoMdMore } from "react-icons/io";
-import { useDispatch, useSelector } from 'react-redux';
-import { deleteMessageRoute, updateMessageReaction } from '../../Routes';
-import { deleteTimeLimit, editTimeLimit } from '../../utils/constant';
+import { useDispatch } from 'react-redux';
+import { updateMessageReaction } from '../../Routes';
+import { deleteTimeLimit } from '../../utils/constant';
 import { setParentMessage } from '../../redux/parentMessageSlice';
-import { Toaster, toast } from 'react-hot-toast';
 import { MdOutlineFileDownload } from "react-icons/md";
-
-export default function PDFMessage({message, senderDetails, handleDelete}) {
+export default function PDFMessage({message, handleDelete}) {
     const [isOptionOpen, setIsOptionOpen] = useState(false);
     const [isOpenReaction, setIsOpenReaction] = useState(false);
-    const [isDeletabble, setIsDeletable] = useState((new Date() - new Date(message.sendAt)) < deleteTimeLimit);
+    const [isDeletabble] = useState((new Date() - new Date(message.sendAt)) < deleteTimeLimit);
     const [reactions, setReactions] = useState(message.reactions);
     const dispatch = useDispatch();
-    const parentMessage = useSelector((state) => state.parentMessage.parentMessage);
     const messagePopUpRef = useRef(null);
-
     const handleClickOutside = (event) => {
         if (messagePopUpRef.current && !messagePopUpRef.current.contains(event.target)) {
             setIsOptionOpen(false);
@@ -35,7 +31,6 @@ export default function PDFMessage({message, senderDetails, handleDelete}) {
             document.removeEventListener('mousedown', handleClickOutside);
         };
     }, [isOptionOpen]);
-
     const handleReaction = async (event, emojiObject) => {
         const user = JSON.parse(localStorage.getItem("user")) || null;
         const headers = {
@@ -51,7 +46,6 @@ export default function PDFMessage({message, senderDetails, handleDelete}) {
         }
         setIsOpenReaction(false);
     };
-
     const getReactionListHtml = () => {
         const listItems = reactions.map((r) => (
             `<li key="${r.id || r.reaction}" class="flex border border-gray-500 p-2 justify-between w-2/3 m-auto">
@@ -66,7 +60,6 @@ export default function PDFMessage({message, senderDetails, handleDelete}) {
           </ul>
         `;
     };
-
     const showAllEmojiList = () => {
         const htmlContent = getReactionListHtml();
         Swal.fire({
@@ -75,11 +68,10 @@ export default function PDFMessage({message, senderDetails, handleDelete}) {
             html: htmlContent
         })
     }
-
     return (
-        <div className="flex">
+        <div className="flex" onDoubleClick={()=>dispatch(setParentMessage(message))}>
             <div className={`relative hidden h-full group-hover/reaction:flex items-center`}>
-                <div className="absolute flex -left-10 text-black text-2xl">
+                <div className="absolute flex -left-10 top-1 text-black text-2xl items-center">
                     <HiOutlineEmojiHappy className="text-gray-900 mx-1 bg-gray cursor-pointer" onClick={() => setIsOpenReaction(!isOpenReaction)} />
                     <div className='absolute -top-2 right-7'>
                         {isOpenReaction && <Picker reactionsDefaultOpen={true} onReactionClick={handleReaction} onEmojiClick={handleReaction} />}
@@ -95,7 +87,6 @@ export default function PDFMessage({message, senderDetails, handleDelete}) {
                         <IoMdMore onClick={() => setIsOptionOpen(!isOptionOpen)} />
                     </p>
                     <div className='relative' ref={messagePopUpRef}>
-
                         {isOptionOpen && <div className='absolute top-6 -left-6 flex-col rounded-lg bg-gray-800 px-1 w-[65px] text-center'>
                             {
                                 isDeletabble && <button className="w-full hover:text-gray-600 hover:rounded my-1 hover:bg-slate-200 cursor-pointer" onClick={handleDelete}>Delete</button>
